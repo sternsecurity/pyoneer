@@ -2,10 +2,6 @@
 Written by Peter Nelson
 Stern Security
 www.sternsecurity.com
-
-Purpose:
-This script is for finding keywords in files and producing output of the filename
-and search term found, NOT the actual data found.
 '''
 #TODO:Add regex search items. ex 555-55-5555 for SSN
 #TODO:Prompt for user input, Search root dir, output path, custom file extension and file type.
@@ -26,12 +22,15 @@ import re
 import PyPDF2
 import textract
 
+#Search file contents for terms with the following extensions
 xmlExt = [".docx", ".xlsx"]
 oleExt = [".doc", ".xls"]
-dbExt = [".mdf", ".db", ".sql", ".sqlite"]
 flatExt = [".csv", ".txt"]
-ransomExt = [".nozelesn"]
 pdfExt = [".pdf"]
+
+#Search for the below extensions only 
+dbExt = [".mdf", ".db", ".sql", ".sqlite"]
+ransomExt = [".nozelesn"]
 
 #Change as needed, search is case insensitive
 searchTerms = ["SSN", "DOB", "mrn", "password", "patient", "pt number", "diagnosis", "phone", "address", "name"]
