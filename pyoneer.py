@@ -42,6 +42,7 @@ outputPath = "/OUTPUT/PATH/results.csv"
 
 #Check file extensions in the 'rootPath' and perform search based on file type.
 #'print' statements have been left in for debug purposes
+#Try statments are below to continue the script in the event of an error/exception
 for root, dirs, files in os.walk(rootPath):
     for file in files:
 		if file.endswith(tuple(xmlExt)) and "~$" not in file:
