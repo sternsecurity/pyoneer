@@ -1,5 +1,5 @@
 # pyoneer
-Pyoneer is a Data Discovery tool written in python for the purpose finding keywords in files or files with specified extensions and producing output of the filename and search term found, NOT the actual data found.
+Pyoneer is a work in progress Data Discovery tool written in python for the purpose finding keywords in files or files with specified extensions and producing output of the filename and search term found, NOT the actual data found.
 
 ## Currently Working Searches
 * DOCX
