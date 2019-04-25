@@ -6,8 +6,9 @@ Pyoneer is a Data Discovery tool written in python for the purpose finding keywo
 * DOC
 * XLSX
 * PDF
+* Text files (CSV,TXT,etc)
 
-## Searches that Require Review
+## Search Code that Requires Review
 * XLS
 * PDF-OCR
 
