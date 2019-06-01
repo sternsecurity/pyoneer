@@ -3,17 +3,6 @@ Written by Peter Nelson
 Stern Security
 www.sternsecurity.com
 '''
-#TODO:Add regex search items. ex 555-55-5555 for SSN
-#TODO:Prompt for user input, Search root dir, output path, custom file extension and file type.
-#TODO:Create better output reporting, maybe an html with links to files.
-#TODO:Move try statements to functions.
-#TODO:Expand database functionality, currently just finds files.
-#TODO:Perform filename search for search terms, currently only looking at file extensions.
-#TODO:Test usability against network shares, may require a mount or mapping to target.
-#TODO:Convert remaining 'document=' opens to with statements.
-#TODO:Review PDF OCR functionality, currently not working.
-#TODO:Review XLS functionality, may need fixes.
-#TODO:Rework output to path|filename.ext|ext/type|term
 
 import os
 import zipfile
