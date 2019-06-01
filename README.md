@@ -8,7 +8,7 @@ Pyoneer is a work in progress Data Discovery tool written in python for the purp
 ## Current Active Development
 * Multi-Threading
 * Moving search code into functions
-* Code logic to treat all other files as flat files= 
+* Code logic to treat all other files as flat files
 
 ## Currently Working Searches
 * DOCX
