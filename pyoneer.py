@@ -1,234 +1,229 @@
-'''
+
+"""
 Written by Peter Nelson
 Stern Security
 www.sternsecurity.com
-'''
+"""
 
+import time
 import os
 import zipfile
 import olefile
 import re
 import PyPDF2
 import textract
+from concurrent.futures import ProcessPoolExecutor
 
-#Search file contents for terms with the following extensions
-xmlExt = [".docx", ".xlsx"]
-oleExt = [".doc", ".xls"]
-flatExt = [".csv", ".txt"]
-pdfExt = [".pdf"]
 
-#Search for the below extensions only 
-dbExt = [".mdf", ".db", ".sql", ".sqlite"]
+# Search though file contents with the following extensions
+xmlDocExt = [".docx", ".xlsx"]
+oleDocExt = [".doc", ".xls"]
+imgExt = [".jpg", ".tiff", ".png"]
+
+# Exclude the following directories files and extensions
+excludeExt = [".mp4", ".mpg", ".mov", ".bmp", ".iso", ".dmg", ".zip", ".exe", ".msi", ".mp3", ".pptx", ".ppt", ".jar", ".gz", ".lock"]
+excludeFile = ["desktop.ini", "thumbs.db", ".DS_Store"]
+excludedirs = ["Windows"]
+
+# Search for the below extensions only, set to true of false
+checkfordb = 'true'
+dbExt = [".ldf", ".mdf", ".db", ".sql", ".sqlite"]
+checkforransom = 'false'
 ransomExt = [".nozelesn"]
+checkforvm = 'false'
+vmExt = [".vmdk", ".vram", ".ovf", ".ova", ".vbox", ".vdi"]
 
-#Change as needed, search is case insensitive
-searchTerms = ["SSN", "DOB", "mrn", "password", "patient", "pt number", "diagnosis", "phone", "address", "name"]
-#Change this variable to the path to search
-rootPath = "/SEARCH/PATH"
-#Change this to the path for search results output.  Results are pipe (|) separated 
-outputPath = "/OUTPUT/PATH/results.csv"
+# Keyword search criteria
+searchTerms = re.compile('(name|visa|ssn|dob|account|password|bin|phone|address|zip|member|birthdate|social|credit|card|ccv|report|402066|4141095|430562|471876|4718760|4718768|478397)', re.I)
 
-#Check file extensions in the 'rootPath' and perform search based on file type.
-#'print' statements have been left in for debug purposes
-#Try statments are below to continue the script in the event of an error/exception
-for root, dirs, files in os.walk(rootPath):
-    for file in files:
-		if file.endswith(tuple(xmlExt)) and "~$" not in file:
-			if file.endswith(".docx"):
-				try:
-					document = zipfile.ZipFile(os.path.join(root, file))
+# XML search tags for DOCX and XLSX
+xlsxsearch = re.compile('<[v|t]>.*?</[v|t]>')
+docxsearch = re.compile('<w:t>.*?</w:t>')
+
+# Change this variable to the path to search
+rootPath = "/PATH/TO/SEARCH/"
+# Change this to the path for search results output.
+outputPath = "/PATH/TO/WRITE/OUTPUT"
+
+start_time = time.time()
+filecount = 0
+
+
+# Worker function called by the main thread
+# Exception is commented out for flat files because when a byte that isn't uft-8 can't be read
+# it's caught as an exception and is very noisy.
+# EG:
+# 'utf-8' codec can't decode byte 0x## in position #####: invalid start byte
+# 'utf-8' codec can't decode byte 0x## in position #####: invalid continuation byte
+def do_work(filePath):
+	if filePath.lower().endswith(tuple(xmlDocExt)) or filePath.lower().endswith(tuple(oleDocExt)) or filePath.lower().endswith('.pdf') or filePath.lower().endswith(tuple(imgExt)):
+		if filePath.lower().endswith(tuple(xmlDocExt)) and "~$" not in filePath:
+			try:
+				with zipfile.ZipFile(str(filePath), 'r') as parentDoc:
 					outputTerm = ""
-					#print(document.namelist())
-					xmlContent = document.read('word/document.xml')
-					document.close()
-					xmlStr = str(xmlContent)
-					text_re = re.findall('<w:t>.*?<\/w:t>',xmlStr)[1:]
-					for item in text_re:
-						#print(item)
-						for term in searchTerms:
-							searchResult = ""
-							searchResult = re.findall('^.*'+term+'.*',item, re.I)
-							if searchResult:
-								outputTerm += term+','
-								#print outputTerm
-								#print(os.path.join(root, file))
-								#print term
-								#print(searchResult)
-							else:
-								continue
-					if outputTerm is not "":
-						with open(outputPath, "a") as outfile:
-							outfile.write(os.path.join(root, file)+'|'+outputTerm+"\n")
-				except Exception:
-					pass
-			if file.endswith(".xlsx"):
-				try:
-					document = zipfile.ZipFile(os.path.join(root, file))
-					outputTerm = ""
-					xmlDocs = document.namelist()
-					#print(xmlDocs)
-					for docs in xmlDocs:
-						workSheets = re.findall('xl/worksheets/.heet.*',docs)
-						#print workSheets
-						if workSheets:
-							#print docs
-							xmlContent = document.read(docs)
-							document.close()
-							#print xmlContent
-							xmlContentStr = str(xmlContent)
-							text_re = re.findall('<v>.*?<\/v>',xmlContentStr)[1:]
-							for item in text_re:
-								#print(item)
-								for term in searchTerms:
-									#print(term)
-									searchResult = ""
-									searchResult = re.findall('^.*'+term+'.*',item, re.I)
+					xmlDocs = parentDoc.namelist()
+					for doc in xmlDocs:
+						searchTarget = re.findall('.*\.xml', doc)
+						if searchTarget:
+							xmlContent = parentDoc.read(doc)
+							if xmlContent is not "":
+								xmlContentStr = str(xmlContent)
+								if filePath.lower().endswith(".xlsx"):
+									regContent = xlsxsearch
+									filetype = ("xlsx")
+								if filePath.lower().endswith(".docx"):
+									regContent = docxsearch
+									filetype = ("docx")
+								text_re = re.findall(regContent, xmlContentStr)
+								for item in text_re:
+									searchResult = searchTerms.findall(item)
 									if searchResult:
-										outputTerm += term+','
-										#print outputTerm
-										#print(os.path.join(root, file))
-										#print term
-										#print(searchResult)
-									else:
-										continue
-					if outputTerm is not "":
-						with open(outputPath, "a") as outfile:
-							outfile.write(os.path.join(root, file)+'|'+outputTerm+"\n")
-				except Exception:
-					pass
-		if file.endswith(tuple(oleExt)) and "~$" not in file:
-			if file.endswith(".doc"):
-				try:
-					#print(os.path.join(root, file))
-					with olefile.OleFileIO(os.path.join(root, file)) as oleDoc:
-						outputTerm = ""
-						#print(oleDoc.listdir())
-						oleContent = oleDoc.openstream('WordDocument')
-						oleData = oleContent.read()
-						oleStr = str(oleData)
-						#print oleData
-						for term in searchTerms:
-							#print term
-							searchResult = ""
-							searchResult = re.findall('^.*'+term+'.*',oleStr, re.I)
-							if searchResult:
-								outputTerm += term+','
-								#print outputTerm
-								#print(os.path.join(root, file))
-								#print term
-								#print(searchResult)
-							else:
-								continue
-					if outputTerm is not "":
-						with open(outputPath, "a") as outfile:
-							outfile.write(os.path.join(root, file)+'|'+outputTerm+"\n")
-				except Exception:
-					pass
-			if file.endswith(".xls"):
-				try:
-					#print(os.path.join(root, file))
-					with olefile.OleFileIO(os.path.join(root, file)) as oleDoc:
-						outputTerm = ""
-						#oleStreams = oleDoc.listdir()
-						#print(oleStreams)
-						#for streams in oleStreams:
-							#sheets = re.findall('sheet.*'
-						oleContent = oleDoc.openstream('Workbook')
-						oleData = oleContent.read()
-						oleStr = str(oleData)
-						#print oleStr
-						output = os.path.join(root, file)
-						for term in searchTerms:
-							#print term
-							searchResult = ""
-							searchResult = re.findall('^.*'+term+'.*',oleStr, re.I)
-							if searchResult:
-								outputTerm += term+','
-								#print outputTerm
-								#print(os.path.join(root, file))
-								#print term
-								#print(searchResult)
-							else:
-								continue
-					if outputTerm is not "":
-						with open(outputPath, "a") as outfile:
-							outfile.write(os.path.join(root, file)+'|'+outputTerm+"\n")
-				except Exception:
-					pass
-		if file.endswith(tuple(flatExt)):
+										for term in searchResult:
+											if term not in outputTerm:
+												outputTerm += term + '|'
+				zipfile.ZipFile.close(parentDoc)
+				if outputTerm is not "":
+					with open(outputPath, "a") as outfile:
+						outfile.write(filePath + ',' + filetype + ',' + outputTerm + "\n")
+						outfile.close()
+			except Exception as e:
+				print(e)
+				pass
+		if filePath.lower().endswith(tuple(oleDocExt)) and "~$" not in filePath:
 			try:
-				with open(os.path.join(root, file)) as flatFile:
+				with olefile.OleFileIO(filePath) as oleDoc:
 					outputTerm = ""
-					flatData = flatFile.read()
-					#print flatData
-					for term in searchTerms:
-							#print term
-							searchResult = ""
-							searchResult = re.findall('^.*'+term+'.*',flatData, re.I)
-							if searchResult:
-								outputTerm += term+','
-								#print outputTerm
-								#print(os.path.join(root, file))
-								#print term
-								#print(searchResult)
-							else:
-								continue
-					if outputTerm is not "":
-						with open(outputPath, "a") as outfile:
-							outfile.write(os.path.join(root, file)+'|'+outputTerm+"\n")
-			except Exception:
-					pass
-		if file.endswith(tuple(pdfExt)):
+					if filePath.lower().endswith(".doc"):
+						oleContent = oleDoc.openstream('WordDocument')
+						filetype = "doc"
+					else:
+						oleContent = oleDoc.openstream('Workbook')
+						filetype = "xls"
+					oleData = oleContent.read()
+					oleStr = str(oleData)
+					olefile.OleFileIO.close(oleDoc)
+					searchResult = searchTerms.findall(oleStr)
+					if searchResult:
+						for term in searchResult:
+							if term not in outputTerm:
+								outputTerm += term + '|'
+				if outputTerm is not "":
+					with open(outputPath, "a") as outfile:
+						outfile.write(filePath + ',' + filetype + ',' + outputTerm + "\n")
+						outfile.close()
+			except Exception as e:
+				print(e)
+				pass
+		if filePath.lower().endswith('.pdf'):
 			try:
-				with open(os.path.join(root, file), 'rb') as pdfFile:
-					pdfReader = PyPDF2.PdfFileReader(pdfFile)
+				with open(filePath, 'rb') as openPdffile:
+					filetype = "pdf"
+					pdfReader = PyPDF2.PdfFileReader(openPdffile)
 					numPages = pdfReader.numPages
 					count = 0
-					pdfText = ""
-					outputTerm = ""
+					pdfText = ''
+					outputTerm = ''
 					while count < numPages:
 						pdfPage = pdfReader.getPage(count)
 						count += 1
 						pdfText += pdfPage.extractText()
-					if pdfText != "":
-						pdfText = pdfText
-						#print pdfText
-					else:
-						#print pdfFile
-						pdfText = textract.process(os.path.join(root, file), method='tesseract', language='eng')
-						#print('#############\n\nOCROCROCROCROCROCROCR\n\n##############')
-						#print (pdfText)
-					for term in searchTerms:
-							#print term
-							searchResult = ""
-							searchResult = re.findall('^.*'+term+'.*',pdfText, re.I)
-							if searchResult:
-								outputTerm += term+','
-								#print outputTerm
-								#print(os.path.join(root, file))
-								#print term
-								#print(searchResult)
-							else:
-								continue
+						if not pdfText:
+							pdfTextOCR = textract.process(filePath, method='tesseract', language='eng')
+							pdfText = str(pdfTextOCR)
+						searchResult = searchTerms.findall(pdfText)
+						if searchResult:
+							for term in searchResult:
+								if term not in outputTerm:
+									outputTerm += term + '|'
+				if outputTerm is not "":
+					with open(outputPath, "a") as outfile:
+						outfile.write(filePath + ',' + filetype + ',' + outputTerm + "\n")
+						outfile.close()
+			except Exception as e:
+				print(e)
+				pass
+		if filePath.lower().endswith(tuple(imgExt)):
+			try:
+				filetype = "image"
+				outputTerm = ''
+				imgTextocr = textract.process(filePath, method='tesseract', language='eng')
+				imgText = str(imgTextocr)
+				searchResult = searchTerms.findall(imgText)
+				if searchResult:
+					for term in searchResult:
+						if term not in outputTerm:
+							outputTerm += term + '|'
+				if outputTerm is not "":
+					with open(outputPath, "a") as outfile:
+						outfile.write(filePath + ',' + filetype + ',' + outputTerm + "\n")
+						outfile.close()
+			except Exception as e:
+				print(e)
+				pass
+	else:
+		if filePath.lower().endswith(tuple(ransomExt)) or filePath.lower().endswith(tuple(dbExt)) or filePath.lower().endswith(tuple(vmExt)):
+			if checkforransom == 'true':
+				if filePath.lower().endswith(tuple(ransomExt)):
+					filetype = "ransom"
+					outputTerm = "Ransomware Extension Found\n"
+					with open(outputPath, "a") as outfile:
+						outfile.write(filePath + ',' + filetype + ',' + outputTerm + "\n")
+						outfile.close()
+			if checkfordb == 'true':
+				if filePath.lower().endswith(tuple(dbExt)):
+					filetype = "database"
+					outputTerm = "Database File Found\n"
+					with open(outputPath, "a") as outfile:
+						outfile.write(filePath + ',' + filetype + ',' + outputTerm + "\n")
+						outfile.close()
+			if checkforvm == 'true':
+				if filePath.lower().endswith(tuple(vmExt)):
+					filetype = "vm"
+					outputTerm = "Virtual Machine File Found\n"
+					with open(outputPath, "a") as outfile:
+						outfile.write(filePath + ',' + filetype + ',' + outputTerm + "\n")
+						outfile.close()
+		else:
+			try:
+				with open(filePath) as flatFile:
+					filetype = "flatfile"
+					outputTerm = ""
+					flatData = flatFile.read()
+					flatFile.close()
+					searchResult = searchTerms.findall(flatData)
+					if searchResult:
+						for term in searchResult:
+							if term not in outputTerm:
+								outputTerm += term + '|'
 					if outputTerm is not "":
 						with open(outputPath, "a") as outfile:
-							outfile.write(os.path.join(root, file)+'|'+outputTerm+"\n")
-			except Exception:
-					pass
-		if file.endswith(tuple(ransomExt)):
-			try:
-				ransomFile = os.path.join(root, file)+"|Ransomware Extension\n"
-				with open(outputPath, "a") as outfile:
-					outfile.write(ransomFile)
-			except Exception:
+							outfile.write(filePath + ',' + filetype + ',' + outputTerm + "\n")
+							outfile.close()
+			except Exception as e:
+				#print(e)
 				pass
-		else:
-			if file.endswith(tuple(dbExt)):
-				try:
-					dbFile = os.path.join(root, file)+"|Database File\n" 
-					with open(outputPath, "a") as outfile:
-						outfile.write(dbFile)
-				except Exception:
-					pass
-			else:
-				continue
+	return
+
+
+# Function to print status for number of files processed
+def statustext(counter):
+	CEND = '\33[0m'
+	CBOLD = '\33[1m'
+	CGREEN = '\33[32m'
+	print(CBOLD + '\rFiles Processed: ' + CBOLD + CGREEN + str(counter) + CEND, end='')
+
+
+if __name__ == "__main__":
+	for root, dirs, files in os.walk(rootPath, topdown=True):
+		for d in dirs[:]:
+			if d in excludedirs:
+				dirs.remove(d)
+			for file in files:
+				if file.lower().endswith(tuple(excludeExt)) or file in tuple(excludeFile):
+					continue
+				fullpath = os.path.join(root, file)
+				executor = ProcessPoolExecutor(max_workers=1)
+				worker = executor.map(do_work, [fullpath])
+				filecount += 1
+				statustext(filecount)
+	print("\n--- %s seconds ---" % (time.time() - start_time))
