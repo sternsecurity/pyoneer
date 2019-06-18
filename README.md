@@ -9,6 +9,8 @@ Last testing of the script, it proccessed over 200,000 local files in less than 
 
 ## Current Active Development
 * Add file size limits (read first 25MB of file over 25MB)
+* Perform filename search for search terms
+* Create better output reporting and reporting
 
 ## Currently Working Searches
 * DOCX
@@ -23,7 +25,7 @@ Last testing of the script, it proccessed over 200,000 local files in less than 
 ## TODO
 * Add regex search items. ex 555-55-5555 for SSN
 * Prompt for user input, Search root dir, output path, custom file extension and file type.
-* Create better output reporting, maybe an html with links to files.
+* Create better output and reporting, maybe an html with links to files.
 ** (Partially worked on, CSV output is improved)
 * Expand database functionality, currently just finds files.
 * Perform filename search for search terms, currently only looking at file extensions.
