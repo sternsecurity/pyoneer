@@ -34,7 +34,7 @@ checkforvm = 'false'
 vmExt = [".vmdk", ".vram", ".ovf", ".ova", ".vbox", ".vdi"]
 
 # Keyword search criteria
-searchTerms = re.compile('(name|visa|ssn|dob|account|password|bin|phone|address|zip|member|birthdate|social|credit|card|ccv|report|402066|4141095|430562|471876|4718760|4718768|478397)', re.I)
+searchTerms = re.compile('(name|visa|ssn|dob|account|password|bin|phone|address|zip|member|birthdate|social|credit|card|ccv|report)', re.I)
 
 # XML search tags for DOCX and XLSX
 xlsxsearch = re.compile('<[v|t]>.*?</[v|t]>')
