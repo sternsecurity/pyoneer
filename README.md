@@ -20,7 +20,7 @@ Last testing of the script, it proccessed over 200,000 local files in less than 
 * PDF
 * PDF-OCR
 * Image OCR (jpg,png,tiff)
-* Text files (CSV,TXT,etc)
+* Any file not matching the above or excluded is read and searched as a flat file.
 
 ## TODO
 * Add regex search items. ex 555-55-5555 for SSN
