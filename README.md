@@ -11,6 +11,16 @@ Pyoneer is a Data Discovery tool written in python3 and using concurrent.futures
 * Perform filename search for search terms
 * PDF-OCR- Requires extracting the images and processing them separately.
 
+## Recent Changes
+* Integrated concurrent.futures in to asyncio context manager
+* Added resume functionality
+* Added folder/file match limit/continue
+* Improved output
+* Improved regex performance
+* Improved on screen status
+* Added more search file types and ability to skip
+* Fixed excluding directories
+
 ## Currently Working Searches
 * DOCX
 * DOC
