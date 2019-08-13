@@ -3,14 +3,13 @@ Developed by Peter Nelson<br>
 Stern Security<br>
 www.sternsecurity.com
 
-Pyoneer is a Data Discovery tool written in python3 and using concurrent.futures for multi-poccessing. It has been written  for the purpose finding keywords in files or files with specified extensions and producing output of the filename and search term found, NOT the actual data found.<br>
+Pyoneer is a Data Discovery tool written in python3 and using concurrent.futures and asyncio for multi-processing. It has been written for the purpose finding keywords in files or files with specified extensions and producing output of the filename and search term found, NOT the actual data found.<br>
 <br>
-Last testing of the script, it proccessed over 200,000 local files in less than 30 minutes, scanning a remote share will add time.
 
 ## Current Active Development
 * Add file size limits (read first 25MB of file over 25MB)
 * Perform filename search for search terms
-* Create better output reporting and reporting
+* PDF-OCR- Requires extracting the images and processing them separately.
 
 ## Currently Working Searches
 * DOCX
@@ -18,7 +17,6 @@ Last testing of the script, it proccessed over 200,000 local files in less than 
 * XLSX
 * XLS
 * PDF
-* PDF-OCR
 * Image OCR (jpg,png,tiff)
 * Any file not matching the above or excluded is read and searched as a flat file.
 
