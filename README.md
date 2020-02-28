@@ -3,7 +3,7 @@ Developed by Peter Nelson<br>
 Stern Security<br>
 www.sternsecurity.com
 
-Pyoneer is a Data Discovery tool written in python3 and using concurrent.futures and asyncio for multi-processing. It has been written for the purpose finding keywords in files or files with specified extensions and producing output of the filename and search term found, NOT the actual data found.<br>
+Pyoneer is an open-source Data Discovery tool written in python3 and using concurrent.futures and asyncio for multi-processing. It has been written for the purpose finding keywords in files or files with specified extensions and producing output of the filename and search term found, NOT the actual data found.<br>
 <br>
 
 ## Current Active Development
