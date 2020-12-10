@@ -35,7 +35,7 @@ checkforvm = 'false'
 vmExt = [".vmdk", ".vram", ".ovf", ".ova", ".vbox", ".vdi"]
 
 # Keyword search criteria
-searchTerms = re.compile('(name|visa|ssn|dob|account|password|bin|phone|address|zip|member|birthdate|social|credit|card|ccv|report)', re.I)
+searchTerms = re.compile('(name|visa|ssn|dob|account|password|bin|phone|address|zip|member|birthdate|social|credit|card|ccv|mbr|acct)', re.I)
 
 # XML search tags for DOCX and XLSX
 xlsxsearch = re.compile('<[v|t]>.*?</[v|t]>')
@@ -43,16 +43,16 @@ docxsearch = re.compile('<w:t>.*?</w:t>')
 resultsearch = re.compile('.*result=\((\d),\s.*>')
 
 # Change this variable to the path to search
-rootPath = "/YOUR/SEARCH/PATH/"
+rootPath = "/mnt/"
 # Change this to the path for search results output.
-outputPath = "/YOUR/OUTPUT/PATH/FILE.csv"
+outputPath = "<path to put results file.csv>"
 
 # Misc variables
 start_time = time.time()
 processedcount = 0
 previousfile = ''
 # Set this to 'true' if you need to restart the script
-resumescript = ''
+resumescript = 'true'
 CEND = '\33[0m'
 CBOLD = '\33[1m'
 CGREEN = '\33[32m'
@@ -65,6 +65,7 @@ matchlimit = 10
 # 'utf-8' codec can't decode byte 0x## in position #####: invalid start byte
 # 'utf-8' codec can't decode byte 0x## in position #####: invalid continuation byte
 def do_work(filePath):
+	# print(filePath)
 	matchext = ''
 	filematch = 0
 	if filePath.lower().endswith(tuple(xmlDocExt)) or filePath.lower().endswith(
@@ -219,7 +220,13 @@ def do_work(filePath):
 
 # Function to print status
 def statustext(filecounter, elapsed, matchcount):
-	print(CBOLD + '\rFiles Processed: ' + CBOLD + CGREEN + str(filecounter) + CEND + ' Match Count: ' + CBOLD + CGREEN + str(matchcount) + CEND + ' Time elapsed: ' + str(elapsed), end='')
+	if filecounter < 1:
+		filecounter = 1
+	if elapsed < 1:
+		elapsed = 1
+	filespersec = int(filecounter) / int(elapsed)
+	filespermin = filespersec * 60
+	print(CBOLD + '\rFiles Processed: ' + CBOLD + CGREEN + str(filecounter) + CEND + ' Match Count: ' + CBOLD + CGREEN + str(matchcount) + CEND + ' Time elapsed: ' + str(elapsed) + ' Files/min: ' + str(filespermin), end='')
 
 # AsyncIO function called by main
 async def async_func():
@@ -272,10 +279,17 @@ async def async_func():
 				with ProcessPoolExecutor(max_workers=2) as executor:
 					runprocess = [loop.run_in_executor(executor, do_work, fullpath)]
 					for item in asyncio.as_completed(runprocess):
-						await item
-						result = re.findall('.*result=.*(\d),\s\'(.*)\'.*', str(runprocess))
-						# Used for the file match limit
-						matchcount = int(result[0][0])
+						try:
+							await item
+							result = re.findall('.*result=.*(\d),\s\'(.*)\'.*', str(runprocess))
+							# Used for the file match limit
+							if result:
+								matchcount = int(result[0][0])
+							else:
+								matchcount = 0
+						except Exception as e:
+							print(e)
+							pass
 						if matchcount == 0:
 							matchtotal = 0
 							matchendswith = ''
